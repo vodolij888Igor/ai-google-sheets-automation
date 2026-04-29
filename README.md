@@ -89,6 +89,12 @@ This improves operational visibility and helps teams prioritize what to fix firs
 }
 ```
 
+## Screenshot
+
+The screenshot below shows a successful POST /analyze-sheet-rows request in FastAPI Swagger UI with a 200 response.
+
+![Swagger UI successful sheet analysis response](docs/images/swagger-sheet-analysis-code-200.png)
+
 ## Current Limitations (Version 1)
 - Uses deterministic placeholder logic (no real LLM call yet).
 - No direct Google Sheets API integration yet.
