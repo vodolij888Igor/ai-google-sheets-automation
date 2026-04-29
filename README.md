@@ -34,8 +34,19 @@ This improves operational visibility and helps teams prioritize what to fix firs
 |       `-- sheet_service.py
 |-- .env.example
 |-- .gitignore
+|-- pytest.ini
 |-- requirements.txt
+|-- tests/
 `-- README.md
+```
+
+## Running Tests
+
+Tests mock the OpenAI client so they do not call the real API and do not require a valid `OPENAI_API_KEY`.
+
+```powershell
+pip install -r requirements.txt
+pytest
 ```
 
 ## Setup Instructions
@@ -115,7 +126,7 @@ The screenshot below shows a successful POST /analyze-sheet-rows request in Fast
 - Connect directly to Google Sheets API for scheduled or event-driven ingestion.
 - Add auth and role-based access for production deployment.
 - Add database storage for analysis history and analytics dashboards.
-- Add tests (unit + integration) and CI/CD pipeline.
+- Add CI/CD pipeline (tests are included locally with pytest).
 
 ## Why This Project Matters for Portfolio
 This project demonstrates:
