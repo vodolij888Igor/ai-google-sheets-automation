@@ -1,5 +1,7 @@
 # AI Google Sheets Automation - FastAPI Backend
 
+[![Tests](https://github.com/vodolij888Igor/ai-google-sheets-automation/actions/workflows/tests.yml/badge.svg)](https://github.com/vodolij888Igor/ai-google-sheets-automation/actions/workflows/tests.yml)
+
 ## Project Overview
 This project is a portfolio-ready backend API that simulates Google Sheets automation with real OpenAI-powered analysis.
 It accepts rows from a sheet-like JSON payload and returns structured insights for each row.
