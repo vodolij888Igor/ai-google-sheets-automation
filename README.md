@@ -220,6 +220,31 @@ Scope is intentionally narrow: this is a **backend portfolio project**, not a sh
 
 **Future versions** could add real Google Sheets API integration, database storage for history and reporting, user authentication, production deployment patterns, scheduled automations (for example sync-on-a-timer or webhook-driven runs), and a frontend dashboard for reviewers and operators.
 
+## Business Value
+
+This project shows how **spreadsheet-based business data** can be analyzed automatically with AI so teams spend less time on **manual review**, can **prioritize** what matters, and move from **raw rows** to **structured, actionable fields** (summary, category, priority, next step).
+
+The same pattern applies wherever work still lives in sheets: **customer feedback**, **support tickets**, **invoice or finance requests**, **sales leads**, **operations notes**, or **CRM exports**—any tabular intake that benefits from consistent classification before humans act on it.
+
+## Example Use Cases
+
+- Customer feedback categorization and prioritization
+- Support request triage from spreadsheet rows
+- Invoice or finance request routing
+- Sales lead qualification from Google Sheets exports
+- Operations task analysis and follow-up recommendations
+- CRM or form submission cleanup before importing into another system
+
+## Future Google Sheets Integration Plan
+
+**Today:** the API **simulates** Google Sheets by accepting **JSON rows** in the request body. There is **no live Google Sheets API integration** in this repository yet.
+
+**Next step (conceptual):** a future version could connect **directly** to the **Google Sheets API** using OAuth or a service account, read rows from a **selected sheet and range**, run the same OpenAI analysis used here, and **write results back** into **new columns** on the same sheet (or a dedicated output tab).
+
+**Possible output columns:** `summary`, `category`, `priority`, `recommended_action`, `processed_at`.
+
+That path keeps the current backend contract as the core and swaps “JSON in the body” for “read/write via Sheets API” when you are ready to operationalize it.
+
 ## Future Improvements
 - Add retries/circuit breaking and stronger observability around AI calls.
 - Connect directly to Google Sheets API for scheduled or event-driven ingestion.
