@@ -233,3 +233,23 @@ This project demonstrates:
 - schema-first request/response validation
 - service-layer architecture that is ready for AI provider integration
 - practical business framing, not just technical implementation
+
+## Quality Checklist
+
+Delivery and documentation status for reviewers:
+
+- [x] FastAPI backend implemented
+- [x] `POST /analyze-sheet-rows` endpoint working
+- [x] Real OpenAI API integration added
+- [x] Simulated Google Sheets rows supported through JSON input
+- [x] Swagger UI tested successfully
+- [x] Screenshot added to README
+- [x] API usage examples included
+- [x] Automated tests added with pytest
+- [x] OpenAI calls mocked in tests
+- [x] GitHub Actions CI added
+- [x] Environment variables handled with `.env`
+- [x] `.env` excluded from GitHub
+- [x] Architecture documented
+- [x] Limitations documented
+- [x] Project pushed to GitHub
