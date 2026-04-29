@@ -179,6 +179,47 @@ Shape matches the API contract. Field values are illustrative; with a live `OPEN
 - AI output quality depends on prompt/model behavior and input quality.
 - No authentication, persistence, or background processing.
 
+## Architecture
+
+This repository follows a small, production-oriented layout suitable for a portfolio review: a thin HTTP layer, validated contracts, and a dedicated service for AI calls.
+
+- The **FastAPI** application exposes **`POST /analyze-sheet-rows`**, the single analysis endpoint used by clients and docs.
+- **Pydantic** schemas validate incoming JSON and the structured response, so invalid payloads fail fast with clear errors.
+- The **service layer** (`app/services/sheet_service.py`) owns OpenAI interaction, error mapping, and normalization of model output into the API contract.
+- **Environment variables** (including `OPENAI_API_KEY`) are loaded from a local **`.env`** file via `python-dotenv`, keeping secrets out of source control.
+- **Swagger UI** (and ReDoc) ship with FastAPI for interactive exploration and manual testing without extra tooling.
+- **Automated tests** mock the OpenAI client so the suite verifies HTTP behavior and response shape **without** calling the real API or requiring a key in CI.
+- The **current version** simulates Google Sheets by accepting **JSON rows** in the request body rather than reading a live spreadsheet.
+
+### Request flow (high level)
+
+```text
+Client / Swagger / Postman
+        ↓
+FastAPI route: POST /analyze-sheet-rows
+        ↓
+Pydantic validation
+        ↓
+Sheet analysis service layer
+        ↓
+OpenAI API
+        ↓
+JSON response: summary, category, priority, recommended_action
+```
+
+## Limitations
+
+Scope is intentionally narrow: this is a **backend portfolio project**, not a shipped Google Sheets add-on or full product surface.
+
+- It is **not** a full Google Sheets add-on or sidebar experience yet.
+- It does **not** connect to the **live Google Sheets API**; rows are supplied as JSON to mirror sheet data.
+- It does **not** persist analyzed rows in a **database**; each request is stateless from the API’s perspective.
+- It does **not** implement **authentication** or multi-tenant access control.
+- It does **not** include a **frontend dashboard** for triage or analytics.
+- It is designed as a **clean local API demo** you can run, document, and extend without operational overhead.
+
+**Future versions** could add real Google Sheets API integration, database storage for history and reporting, user authentication, production deployment patterns, scheduled automations (for example sync-on-a-timer or webhook-driven runs), and a frontend dashboard for reviewers and operators.
+
 ## Future Improvements
 - Add retries/circuit breaking and stronger observability around AI calls.
 - Connect directly to Google Sheets API for scheduled or event-driven ingestion.
