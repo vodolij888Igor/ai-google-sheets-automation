@@ -1,72 +1,145 @@
-"""Service layer for analyzing simulated sheet rows.
+"""Service layer for analyzing simulated sheet rows with OpenAI."""
 
-This file intentionally uses placeholder logic for version 1.
-Later versions can replace this with real LLM integrations.
-"""
+import json
+import os
+from typing import Any
+
+from dotenv import load_dotenv
+from openai import OpenAI
 
 from app.schemas.sheet_schema import AnalyzedRow, SheetRowInput
 
+load_dotenv()
 
-def _detect_priority(text: str) -> str:
-    """Simple keyword-based priority classifier."""
-    lowered = text.lower()
-    if any(word in lowered for word in ["urgent", "broken", "refund", "angry"]):
-        return "high"
-    if any(word in lowered for word in ["confusing", "slow", "issue", "problem"]):
-        return "medium"
-    return "low"
-
-
-def _detect_category(text: str) -> str:
-    """Simple keyword-based category classifier."""
-    lowered = text.lower()
-    if any(word in lowered for word in ["onboarding", "feature", "product", "ui", "ux"]):
-        return "product_feedback"
-    if any(word in lowered for word in ["price", "billing", "payment"]):
-        return "billing_feedback"
-    if any(word in lowered for word in ["support", "agent", "response time"]):
-        return "support_feedback"
-    return "general_feedback"
+ALLOWED_CATEGORIES = {
+    "customer_feedback",
+    "sales_lead",
+    "invoice_processing",
+    "support_request",
+    "operations",
+    "other",
+}
+ALLOWED_PRIORITIES = {"low", "medium", "high"}
 
 
-def _build_summary(text: str) -> str:
-    """Create a short summary from raw row text."""
-    cleaned = text.strip().rstrip(".")
-    if len(cleaned) <= 90:
-        return cleaned + "."
-    return cleaned[:87].rstrip() + "..."
+class SheetServiceError(Exception):
+    """Known service-layer error that can be mapped to HTTP errors."""
+
+    def __init__(self, message: str, status_code: int) -> None:
+        super().__init__(message)
+        self.message = message
+        self.status_code = status_code
 
 
-def _recommended_action(category: str, priority: str) -> str:
-    """Return an action suggestion based on category and priority."""
-    if category == "product_feedback":
-        if priority == "high":
-            return "Schedule a product team review within 24 hours."
-        return "Document feedback and improve product guidance."
-    if category == "billing_feedback":
-        return "Review billing flow and update pricing communication."
-    if category == "support_feedback":
-        return "Investigate support workflow and improve response speed."
-    return "Log this feedback and monitor for similar patterns."
+def _build_prompt(row_text: str) -> str:
+    """Create a clear instruction prompt for structured row analysis."""
+    return f"""
+Analyze the following spreadsheet row text and return ONLY valid JSON.
+
+Row text:
+{row_text}
+
+Required JSON shape:
+{{
+  "summary": "short concise summary",
+  "category": "one of customer_feedback, sales_lead, invoice_processing, support_request, operations, other",
+  "priority": "one of low, medium, high",
+  "recommended_action": "clear next action"
+}}
+"""
+
+
+def _extract_json_object(content: str) -> dict[str, Any]:
+    """Parse JSON object from model output."""
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        start = content.find("{")
+        end = content.rfind("}")
+        if start == -1 or end == -1 or start >= end:
+            raise SheetServiceError(
+                "OpenAI returned an invalid non-JSON response for row analysis.",
+                status_code=502,
+            ) from None
+        try:
+            return json.loads(content[start : end + 1])
+        except json.JSONDecodeError as exc:
+            raise SheetServiceError(
+                "OpenAI returned malformed JSON for row analysis.",
+                status_code=502,
+            ) from exc
+
+
+def _normalize_analysis(parsed: dict[str, Any]) -> dict[str, str]:
+    """Validate and normalize model output values."""
+    summary = str(parsed.get("summary", "")).strip()
+    category = str(parsed.get("category", "other")).strip().lower()
+    priority = str(parsed.get("priority", "medium")).strip().lower()
+    recommended_action = str(parsed.get("recommended_action", "")).strip()
+
+    if not summary:
+        summary = "No summary provided by model."
+    if category not in ALLOWED_CATEGORIES:
+        category = "other"
+    if priority not in ALLOWED_PRIORITIES:
+        priority = "medium"
+    if not recommended_action:
+        recommended_action = "Review this row manually."
+
+    return {
+        "summary": summary,
+        "category": category,
+        "priority": priority,
+        "recommended_action": recommended_action,
+    }
+
+
+def _analyze_single_row(client: OpenAI, row_text: str) -> dict[str, str]:
+    """Call OpenAI for one row and return normalized structured data."""
+    try:
+        completion = client.responses.create(
+            model="gpt-4o-mini",
+            input=[{"role": "user", "content": _build_prompt(row_text)}],
+            temperature=0.2,
+        )
+    except Exception as exc:
+        raise SheetServiceError(
+            f"OpenAI API call failed: {exc}",
+            status_code=502,
+        ) from exc
+
+    content = completion.output_text.strip() if completion.output_text else ""
+    if not content:
+        raise SheetServiceError(
+            "OpenAI returned an empty response for row analysis.",
+            status_code=502,
+        )
+
+    parsed = _extract_json_object(content)
+    return _normalize_analysis(parsed)
 
 
 def analyze_rows(rows: list[SheetRowInput]) -> list[AnalyzedRow]:
-    """Analyze each row using deterministic placeholder logic."""
+    """Analyze each row by calling OpenAI and returning validated output."""
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not api_key:
+        raise SheetServiceError(
+            "OPENAI_API_KEY is missing. Set it in your .env file before calling this endpoint.",
+            status_code=503,
+        )
+
+    client = OpenAI(api_key=api_key)
     analyzed: list[AnalyzedRow] = []
 
     for row in rows:
-        category = _detect_category(row.text)
-        priority = _detect_priority(row.text)
-        summary = _build_summary(row.text)
-        action = _recommended_action(category, priority)
-
+        analysis = _analyze_single_row(client=client, row_text=row.text)
         analyzed.append(
             AnalyzedRow(
                 row_id=row.row_id,
-                summary=summary,
-                category=category,
-                priority=priority,
-                recommended_action=action,
+                summary=analysis["summary"],
+                category=analysis["category"],
+                priority=analysis["priority"],
+                recommended_action=analysis["recommended_action"],
             )
         )
 

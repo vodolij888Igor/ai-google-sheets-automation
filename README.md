@@ -1,7 +1,7 @@
 # AI Google Sheets Automation - FastAPI Backend
 
 ## Project Overview
-This project is a portfolio-ready backend API that simulates Google Sheets automation with AI-style analysis.
+This project is a portfolio-ready backend API that simulates Google Sheets automation with real OpenAI-powered analysis.
 It accepts rows from a sheet-like JSON payload and returns structured insights for each row.
 
 The purpose is to demonstrate practical backend API development for an **AI Automation & Integration Developer** profile, with clear pathways to evolve into a full-stack AI product.
@@ -21,6 +21,7 @@ This improves operational visibility and helps teams prioritize what to fix firs
 - **FastAPI**
 - **Pydantic**
 - **Uvicorn**
+- **OpenAI API**
 
 ## Project Structure
 ```text
@@ -49,6 +50,10 @@ This improves operational visibility and helps teams prioritize what to fix firs
    pip install -r requirements.txt
    ```
 3. (Optional) Copy `.env.example` to `.env` and adjust values.
+   - Add your key:
+     ```env
+     OPENAI_API_KEY=your_openai_api_key_here
+     ```
 4. Run the API server:
    ```powershell
    uvicorn app.main:app --reload --port 8000
@@ -80,14 +85,18 @@ This improves operational visibility and helps teams prioritize what to fix firs
   "analyzed_rows": [
     {
       "row_id": 1,
-      "summary": "Customer says the product is useful but onboarding is confusing.",
-      "category": "product_feedback",
+      "summary": "Customer finds the product useful but has onboarding confusion.",
+      "category": "customer_feedback",
       "priority": "medium",
-      "recommended_action": "Document feedback and improve product guidance."
+      "recommended_action": "Improve onboarding instructions and update help content."
     }
   ]
 }
 ```
+
+### Supported AI Labels
+- `category`: `customer_feedback`, `sales_lead`, `invoice_processing`, `support_request`, `operations`, `other`
+- `priority`: `low`, `medium`, `high`
 
 ## Screenshot
 
@@ -96,13 +105,13 @@ The screenshot below shows a successful POST /analyze-sheet-rows request in Fast
 ![Swagger UI successful sheet analysis response](docs/images/swagger-sheet-analysis-code-200.png)
 
 ## Current Limitations (Version 1)
-- Uses deterministic placeholder logic (no real LLM call yet).
+- Requires a valid `OPENAI_API_KEY` in `.env`.
 - No direct Google Sheets API integration yet.
-- Classification and recommendations are rule-based and simplistic.
+- AI output quality depends on prompt/model behavior and input quality.
 - No authentication, persistence, or background processing.
 
 ## Future Improvements
-- Integrate OpenAI or another LLM provider for higher-quality analysis.
+- Add retries/circuit breaking and stronger observability around AI calls.
 - Connect directly to Google Sheets API for scheduled or event-driven ingestion.
 - Add auth and role-based access for production deployment.
 - Add database storage for analysis history and analytics dashboards.
