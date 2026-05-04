@@ -1,5 +1,7 @@
 # AI Google Sheets Automation - FastAPI Backend
 
+Structured FastAPI service that turns Google Sheets-style business rows into AI-generated summaries, categories, priorities, and recommended actions.
+
 [![Tests](https://github.com/vodolij888Igor/ai-google-sheets-automation/actions/workflows/tests.yml/badge.svg)](https://github.com/vodolij888Igor/ai-google-sheets-automation/actions/workflows/tests.yml)
 
 ## Project Overview
